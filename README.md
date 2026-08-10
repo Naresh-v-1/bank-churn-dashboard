@@ -2,7 +2,7 @@
 
 An end-to-end machine learning project that predicts which bank customers are likely to churn, explains *why* using SHAP, and translates those predictions into a business-ready retention strategy — built and deployed as an interactive web dashboard.
 
-**🔗 Live Demo:** [Add your Streamlit Cloud link here once deployed]
+**🔗 Live Demo:** [https://bank-churn-dashboard-naresh.streamlit.app/](https://bank-churn-dashboard-naresh.streamlit.app/)
 **📁 Repository:** https://github.com/Naresh-v-1/bank-churn-dashboard
 
 ---
@@ -70,6 +70,7 @@ Feature importance analysis shows **Age**, **Number of Products**, and **Balance
 - **Explainability:** SHAP
 - **Visualization:** Plotly, Matplotlib, Seaborn
 - **Web App:** Streamlit
+- **Deployment:** Streamlit Community Cloud
 - **Dataset:** [Bank Customer Churn Prediction (Kaggle)](https://www.kaggle.com/datasets/shantanudhakadd/bank-customer-churn-prediction)
 
 ---
@@ -87,7 +88,7 @@ bank-churn-dashboard/
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Setup & Installation (run locally)
 
 1. **Clone the repository**
    ```bash
@@ -114,6 +115,8 @@ bank-churn-dashboard/
    ```bash
    streamlit run app.py
    ```
+
+Or skip all of the above and just use the **[live demo](https://bank-churn-dashboard-naresh.streamlit.app/)**.
 
 ---
 

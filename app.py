@@ -17,6 +17,29 @@ st.title("🏦 Bank Customer Churn Prediction Dashboard")
 st.caption("Predicts at-risk customers and recommends retention actions based on risk & value segments.")
 
 # ---------------------------
+# DATA DICTIONARY / COLUMN GLOSSARY
+# ---------------------------
+with st.expander("ℹ️ What do these columns mean? (Data Dictionary)"):
+    st.markdown("""
+| Column | Meaning |
+|---|---|
+| **CreditScore** | The customer's credit score (300–900). Higher generally means lower credit risk. |
+| **Geography** | The country/region the customer banks in (e.g., France, Germany, Spain). |
+| **Gender** | Customer's gender as recorded by the bank. |
+| **Age** | Customer's age in years. |
+| **Tenure** | Number of years the customer has been with the bank. |
+| **Balance** | Current account balance held by the customer. |
+| **NumOfProducts** | Number of bank products the customer holds (e.g., savings account, credit card, loan). |
+| **HasCrCard** | Whether the customer holds a credit card with the bank (1 = Yes, 0 = No). |
+| **IsActiveMember** | Whether the customer is actively engaging with the bank (1 = Active, 0 = Inactive). |
+| **EstimatedSalary** | Customer's estimated annual salary. |
+| **churn_probability** | The model's predicted likelihood (0–100%) that this customer will leave the bank. |
+| **segment** | Risk/value grouping: *High Risk–High Value*, *High Risk–Low Value*, or *Low Risk*. |
+| **primary_driver** | The single factor (via SHAP) contributing most to that customer's predicted churn risk. |
+| **auto_offer** | The retention offer automatically recommended based on the primary driver. |
+""")
+
+# ---------------------------
 # OFFER TEMPLATES (mapped to SHAP's top churn driver per customer)
 # ---------------------------
 OFFER_MAP = {

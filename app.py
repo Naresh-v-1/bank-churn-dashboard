@@ -162,8 +162,16 @@ with st.spinner("Computing personalized offer drivers (SHAP)..."):
     if at_risk_mask.sum() > 0:
         X_at_risk_scaled = X_test_scaled[at_risk_mask.values]
         top_drivers = compute_top_drivers(model, X_at_risk_scaled, feature_columns)
-        results_df.loc[at_risk_mask, "primary_driver"] = top_drivers
-        results_df.loc[at_risk_mask, "auto_offer"] = [OFFER_MAP.get(d, "General retention outreach") for d in top_drivers]
+
+        # FIX: build index-aligned Series instead of assigning a raw list
+        # positionally into a boolean-masked .loc — this avoids the
+        # ValueError from ambiguous length/dtype inference in pandas.
+        at_risk_index = results_df.index[at_risk_mask]
+        driver_series = pd.Series(top_drivers, index=at_risk_index, dtype="object")
+        offer_series = driver_series.map(lambda d: OFFER_MAP.get(d, "General retention outreach"))
+
+        results_df.loc[at_risk_index, "primary_driver"] = driver_series
+        results_df.loc[at_risk_index, "auto_offer"] = offer_series
 
 # ---------------------------
 # TOP METRICS
@@ -344,10 +352,16 @@ with tab4:
                                     vals = vals[:, :, 1]
                             top_idx = np.argmax(vals, axis=1)
                             drivers = [feature_columns[i] for i in top_idx]
-                            output_df.loc[output_at_risk_mask, "primary_driver"] = drivers
-                            output_df.loc[output_at_risk_mask, "auto_offer"] = [
-                                OFFER_MAP.get(d, "General retention outreach") for d in drivers
-                            ]
+
+                            # FIX: same index-aligned assignment as above
+                            at_risk_index = output_df.index[output_at_risk_mask]
+                            driver_series = pd.Series(drivers, index=at_risk_index, dtype="object")
+                            offer_series = driver_series.map(
+                                lambda d: OFFER_MAP.get(d, "General retention outreach")
+                            )
+
+                            output_df.loc[at_risk_index, "primary_driver"] = driver_series
+                            output_df.loc[at_risk_index, "auto_offer"] = offer_series
 
                     output_df = output_df.sort_values("churn_probability", ascending=False)
 

@@ -408,7 +408,7 @@ with tab2:
     st.dataframe(
         filtered[["churn_probability", "segment", "primary_driver", "auto_offer", value_col, "Age", "Tenure"]]
         .style.format({"churn_probability": "{:.2%}"})
-        .applymap(highlight_segment, subset=["segment"]),
+        .map(highlight_segment, subset=["segment"]),
         width="stretch"
     )
 
@@ -536,7 +536,7 @@ with tab4:
 
                     st.dataframe(
                         output_df.style.format({"churn_probability": "{:.2%}"})
-                        .applymap(highlight_segment, subset=["segment"]),
+                        .map(highlight_segment, subset=["segment"]),
                         width="stretch"
                     )
 

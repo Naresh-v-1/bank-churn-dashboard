@@ -13,8 +13,172 @@ import shap
 
 st.set_page_config(page_title="Bank Customer Churn Dashboard", layout="wide")
 
-st.title("🏦 Bank Customer Churn Prediction Dashboard")
-st.caption("Predicts at-risk customers and recommends retention actions based on risk & value segments.")
+# ---------------------------
+# VISUAL DESIGN — bank ledger / decision-science theme
+# ---------------------------
+CUSTOM_CSS = '''
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root {
+    --ink-navy: #0B2545;
+    --ledger-cream: #F7F5F0;
+    --aged-paper: #EDE8DC;
+    --brass-gold: #C9A227;
+    --risk-rust: #B23A2E;
+    --vault-green: #2F6F4E;
+}
+
+[data-testid="stAppViewContainer"] { background-color: var(--ledger-cream); }
+[data-testid="stHeader"] { background-color: transparent; }
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+    color: var(--ink-navy);
+}
+
+h1, h2, h3 {
+    font-family: 'Fraunces', serif !important;
+    color: var(--ink-navy) !important;
+    font-weight: 600 !important;
+}
+
+/* Letterhead header banner */
+.ledger-header {
+    background: linear-gradient(180deg, #0B2545 0%, #123061 100%);
+    border-bottom: 3px double var(--brass-gold);
+    padding: 30px 40px 24px 40px;
+    border-radius: 6px;
+    margin-bottom: 26px;
+    position: relative;
+    overflow: hidden;
+}
+.ledger-header h1 {
+    color: #F7F5F0 !important;
+    font-family: 'Fraunces', serif !important;
+    font-size: 2.1rem !important;
+    margin: 0 0 6px 0 !important;
+    letter-spacing: 0.3px;
+}
+.ledger-header p {
+    color: #C9CFDC;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    margin: 0;
+    max-width: 640px;
+}
+.ledger-stamp {
+    position: absolute;
+    top: 20px;
+    right: 32px;
+    width: 90px;
+    height: 90px;
+    border: 2px solid var(--brass-gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brass-gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.55rem;
+    letter-spacing: 1.4px;
+    text-align: center;
+    text-transform: uppercase;
+    transform: rotate(-8deg);
+    opacity: 0.85;
+    line-height: 1.25;
+}
+
+/* Metric cards */
+[data-testid="stMetric"] {
+    background-color: #FFFFFF;
+    border: 1px solid #DDD5C4;
+    border-left: 4px solid var(--brass-gold);
+    border-radius: 6px;
+    padding: 14px 16px 10px 16px;
+}
+[data-testid="stMetricLabel"] {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.76rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #5A6B85 !important;
+}
+[data-testid="stMetricValue"] {
+    font-family: 'IBM Plex Mono', monospace !important;
+    color: var(--ink-navy) !important;
+}
+
+/* Tabs */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px;
+    border-bottom: 1px solid #DDD5C4;
+}
+.stTabs [data-baseweb="tab"] {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    color: #5A6B85;
+}
+.stTabs [aria-selected="true"] {
+    color: var(--ink-navy) !important;
+    border-bottom: 2px solid var(--brass-gold) !important;
+}
+
+/* Buttons */
+.stButton>button, .stDownloadButton>button {
+    background-color: var(--ink-navy);
+    color: #F7F5F0;
+    border: 1px solid var(--ink-navy);
+    border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+}
+.stButton>button:hover, .stDownloadButton>button:hover {
+    background-color: var(--brass-gold);
+    border-color: var(--brass-gold);
+    color: var(--ink-navy);
+}
+
+/* Progress bar */
+.stProgress > div > div > div > div { background-color: var(--brass-gold); }
+
+/* Expander */
+.streamlit-expanderHeader {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    background-color: var(--aged-paper);
+    border-radius: 4px;
+}
+
+hr { border-top: 1px solid #DDD5C4 !important; }
+</style>
+'''
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+st.markdown('''
+<div class="ledger-header">
+    <div class="ledger-stamp">Decision<br>Science<br>Model</div>
+    <h1>🏦 Bank Customer Churn Prediction Dashboard</h1>
+    <p>Predicts at-risk customers and recommends retention actions based on risk & value segments.</p>
+</div>
+''', unsafe_allow_html=True)
+
+# ---------------------------
+# SEGMENT COLOR SYSTEM (used across charts + tables)
+# ---------------------------
+SEGMENT_COLORS = {
+    "High Risk - High Value": "#B23A2E",
+    "High Risk - Low Value": "#C9A227",
+    "Low Risk": "#2F6F4E"
+}
+
+def highlight_segment(val):
+    styles = {
+        "High Risk - High Value": "background-color:#FBEAE8;color:#B23A2E;font-weight:600;",
+        "High Risk - Low Value": "background-color:#FBF3DC;color:#8A6D1C;font-weight:600;",
+        "Low Risk": "background-color:#E8F3EC;color:#2F6F4E;font-weight:600;"
+    }
+    return styles.get(val, "")
 
 # ---------------------------
 # DATA DICTIONARY / COLUMN GLOSSARY
@@ -203,22 +367,27 @@ with tab1:
     st.subheader("Confusion Matrix")
     col_a, col_b = st.columns([1, 1])
     with col_a:
+        navy_cmap = sns.light_palette("#0B2545", as_cmap=True)
         fig, ax = plt.subplots(figsize=(4, 3.2))
         sns.heatmap(
-            cm, annot=True, fmt="d", cmap="Blues", ax=ax,
-            annot_kws={"size": 10}, cbar=False
+            cm, annot=True, fmt="d", cmap=navy_cmap, ax=ax,
+            annot_kws={"size": 10, "color": "#0B2545"}, cbar=False,
+            linewidths=0.5, linecolor="#DDD5C4"
         )
         ax.set_xlabel("Predicted", fontsize=9)
         ax.set_ylabel("Actual", fontsize=9)
         ax.tick_params(labelsize=9)
+        fig.patch.set_facecolor("#F7F5F0")
         st.pyplot(fig, width="content")
 
     st.subheader("Segment Distribution")
     seg_counts = results_df["segment"].value_counts().reset_index()
     seg_counts.columns = ["segment", "count"]
     fig2 = px.bar(seg_counts, x="segment", y="count", color="segment",
+                  color_discrete_map=SEGMENT_COLORS,
                   title="Customers by Risk Segment")
-    fig2.update_layout(height=400)
+    fig2.update_layout(height=400, plot_bgcolor="#F7F5F0", paper_bgcolor="#F7F5F0",
+                        font_family="Inter", showlegend=False)
     st.plotly_chart(fig2, width="stretch")
 
 with tab2:
@@ -238,7 +407,8 @@ with tab2:
     st.write(f"Showing {len(filtered)} customers")
     st.dataframe(
         filtered[["churn_probability", "segment", "primary_driver", "auto_offer", value_col, "Age", "Tenure"]]
-        .style.format({"churn_probability": "{:.2%}"}),
+        .style.format({"churn_probability": "{:.2%}"})
+        .applymap(highlight_segment, subset=["segment"]),
         width="stretch"
     )
 
@@ -248,8 +418,10 @@ with tab2:
 with tab3:
     st.subheader("What Drives Churn Predictions")
     fig3 = px.bar(feature_importance.head(10), x="importance", y="feature", orientation="h",
-                  title="Top 10 Features Driving Churn Risk")
-    fig3.update_layout(yaxis={'categoryorder': 'total ascending'}, height=400)
+                  title="Top 10 Features Driving Churn Risk",
+                  color_discrete_sequence=["#C9A227"])
+    fig3.update_layout(yaxis={'categoryorder': 'total ascending'}, height=400,
+                        plot_bgcolor="#F7F5F0", paper_bgcolor="#F7F5F0", font_family="Inter")
     st.plotly_chart(fig3, width="stretch")
 
 with tab4:
@@ -356,11 +528,15 @@ with tab4:
                     seg_counts_user = output_df["segment"].value_counts().reset_index()
                     seg_counts_user.columns = ["segment", "count"]
                     fig_user = px.bar(seg_counts_user, x="segment", y="count", color="segment",
+                                       color_discrete_map=SEGMENT_COLORS,
                                        title="Uploaded Customers by Risk Segment")
+                    fig_user.update_layout(plot_bgcolor="#F7F5F0", paper_bgcolor="#F7F5F0",
+                                            font_family="Inter", showlegend=False)
                     st.plotly_chart(fig_user, width="stretch")
 
                     st.dataframe(
-                        output_df.style.format({"churn_probability": "{:.2%}"}),
+                        output_df.style.format({"churn_probability": "{:.2%}"})
+                        .applymap(highlight_segment, subset=["segment"]),
                         width="stretch"
                     )
 
@@ -450,6 +626,12 @@ with tab5:
 
         st.progress(min(float(sim_prob), 1.0))
 
+        badge_color = SEGMENT_COLORS.get(seg, "#0B2545")
+        st.markdown(
+            f'<span style="background-color:{badge_color}22;color:{badge_color};'
+            f'padding:4px 10px;border-radius:12px;font-weight:600;font-size:0.85rem;">{seg}</span>',
+            unsafe_allow_html=True
+        )
         st.markdown(f"**Primary churn driver (SHAP):** `{top_driver}`")
         st.markdown(f"**Auto-generated personalized offer:** {auto_offer}")
 
